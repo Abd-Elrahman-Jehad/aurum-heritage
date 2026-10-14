@@ -1,5 +1,5 @@
 <div align="center">
-
+ 
 <img src="docs/hero.jpg" alt="AURUM — Heritage 42" width="100%" />
 
 # AURUM — Heritage 42
@@ -105,17 +105,7 @@ SITE_URL=https://your-domain.com npm run build
 | Colours, spacing, motion | `src/styles.css`, `src/styles-ui.css` |
 | Share (Open Graph) images | `public/og/*.jpg` (1200×630) |
 
-## SEO & GEO
 
-Search engines **and** generative engines (ChatGPT, Claude, Perplexity, Gemini, Copilot…) get the same clean facts.
-
-- **Prerendered HTML per route** — `scripts/seo.mjs` writes `dist/<route>/index.html` with title, description, canonical, robots, Open Graph, Twitter card and JSON-LD, plus crawlable text, so nothing depends on JavaScript to be understood. Unknown URLs get a real `404.html` with `noindex`.
-- **Structured data** — `Organization`, `WebSite`, `WebPage` / `CollectionPage` / `ProfilePage`, `BreadcrumbList`, `ItemList`, `Product` + `Offer` for every watch, and `Person` for the creator (with every spelling of the name).
-- **Share images** — a branded 1200 × 630 card for the site and one per watch (small "Eng.Abdelrahman" credit, no personal name).
-- **`sitemap.xml`** (with image entries), **`robots.txt`** (search and AI crawlers explicitly welcome), **`llms.txt`** (a plain-language summary for AI engines), web manifest and icons.
-- **Entity consistency** — brand, product and author facts are identical everywhere; the author page and footer credit tie the name to the site.
-
-After going live: submit the sitemap in Google Search Console and Bing Webmaster Tools, and link to `/about` from your social profiles. Details in [`DEPLOY.md`](DEPLOY.md).
 
 ## Security
 
