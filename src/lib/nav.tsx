@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, type AnchorHTMLAttributes, type ReactNode } from 'react'
+import { useLayoutEffect, createContext, useCallback, useContext, useEffect, useRef, type AnchorHTMLAttributes, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -104,6 +104,13 @@ export function NavProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entered, lenis])
 
+  /* before the new page is painted, drop the old scroll offset so a page never flashes in mid-way */
+  const firstPaint = useRef(true)
+  useLayoutEffect(() => {
+    if (firstPaint.current) { firstPaint.current = false; return }
+    window.scrollTo(0, 0)
+  }, [loc.pathname])
+
   /* after a route change: back to top (or the hash), refresh triggers, soft fade-in */
   const first = useRef(true)
   useEffect(() => {
@@ -113,8 +120,21 @@ export function NavProvider({ children }: { children: ReactNode }) {
     }
     const hash = pendingHash.current
     pendingHash.current = ''
-    window.scrollTo(0, 0)
-    lenis?.scrollTo(0, { immediate: true, force: true })
+    // always open a page from its very top. Phones can ignore a scroll reset while the previous page is still coasting
+    // (iOS momentum), so the reset is repeated for a moment unless the visitor has already started scrolling again.
+    const toTop = () => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      lenis?.scrollTo(0, { immediate: true, force: true })
+    }
+    toTop()
+    let touched = false
+    const mark = () => { touched = true }
+    const keep: number[] = []
+    if (!hash) {
+      ;['wheel', 'touchstart', 'keydown'].forEach((e) => window.addEventListener(e, mark, { passive: true, once: true }))
+      ;[40, 120, 260, 500, 900].forEach((ms) => keep.push(window.setTimeout(() => { if (!touched && window.scrollY > 0) toTop() }, ms)))
+    }
     const wasBusy = busy.current
     if (!wasBusy) gsap.fromTo('main', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out', clearProps: 'opacity,transform' })
     const t = setTimeout(() => {
@@ -133,7 +153,11 @@ export function NavProvider({ children }: { children: ReactNode }) {
         .to([topRef.current, botRef.current], { scaleY: 0, duration: 0.9, ease: 'expo.inOut' }, 0.4)
         .set(markRef.current, { opacity: 0 })
     }, 140)
-    return () => clearTimeout(t)
+    return () => {
+      clearTimeout(t)
+      keep.forEach(clearTimeout)
+      ;['wheel', 'touchstart', 'keydown'].forEach((e) => window.removeEventListener(e, mark))
+    }
   }, [loc.pathname, lenis, scrollToHash])
 
   return (

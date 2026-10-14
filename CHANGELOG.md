@@ -172,3 +172,9 @@ The supplied video carries the generator's own watermark (top-right). It is part
 - The ring "comes apart" while the watch comes apart (outer scale ring grows, legend ring turns the other way and shrinks, inner rings swell) and glides back together, aligned, when the watch is whole again — no fade, no jump.
 
 - README screenshots, recording and filmstrip re-captured from this exact version.
+
+## v29
+- **Mobile scroll fixed.** The loading screen locked scrolling (`body.is-loading`) and never released it, so touch devices could not scroll after the intro (desktop wheel kept working because Lenis scrolls programmatically). The lock is now released as soon as the curtain opens.
+- **Share image fixed.** The prerender no longer falls back to a placeholder domain: it uses `SITE_URL`, else the host's own URL (`URL` on Netlify, `CF_PAGES_URL`, `VERCEL_PROJECT_PRODUCTION_URL`), else `https://aurum-heritage.netlify.app`. `og:image`, canonical, sitemap and JSON-LD are always absolute https URLs.
+- **Stray ring fixed.** After a resize / zoom / rebuild while the story was running, the legend ring could be left in a corner of the page, rotating. The ring layers are now driven by plain numbers written to the SVG `transform` (no `svgOrigin` offsets) and redrawn on GSAP's ticker, so they always return to the exact centre.
+- **Pages open from the top.** Opening a watch (or any page) from a card/link now always starts at the very top: the scroll is reset before the new page paints and re-applied for a moment afterwards, which covers phones that ignore a scroll reset while the previous page is still coasting.

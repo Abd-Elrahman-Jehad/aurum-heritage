@@ -8,8 +8,11 @@ import { tmpdir } from 'node:os'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
-let SITE = (process.env.SITE_URL || process.env.VITE_SITE_URL || '').replace(/\/+$/, '')
-if (!SITE) { SITE = 'https://aurum-watch.example'; console.warn('\n⚠  SITE_URL is not set — using the placeholder ' + SITE + '. Set SITE_URL=https://your-domain.com before the production build.\n') }
+const FALLBACK_SITE = 'https://aurum-heritage.netlify.app'
+// SITE_URL wins; otherwise use whatever the host exposes at build time (Netlify, Cloudflare Pages, Vercel)
+const hostUrl = process.env.URL || process.env.CF_PAGES_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? 'https://' + process.env.VERCEL_PROJECT_PRODUCTION_URL : '')
+let SITE = (process.env.SITE_URL || process.env.VITE_SITE_URL || hostUrl || FALLBACK_SITE).replace(/\/+$/, '')
+if (!/^https:\/\//.test(SITE)) SITE = FALLBACK_SITE
 
 const out = join(tmpdir(), `seodata-${process.pid}.mjs`)
 await build({ entryPoints: [join(root, 'src/lib/seoData.ts')], bundle: true, format: 'esm', platform: 'node', outfile: out, logLevel: 'silent' })

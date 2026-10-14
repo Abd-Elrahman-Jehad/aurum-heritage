@@ -43,7 +43,7 @@ export default function Scene() {
     mm.add({ portrait: '(max-width: 860px) and (orientation: portrait)', wide: '(min-width: 861px), (orientation: landscape)' }, (mq) => {
       const portrait = !!mq.conditions?.portrait
       // a rebuild (language / size change) starts from clean elements: stale inline transforms + GSAP caches made titles stay hidden
-      gsap.set('.chap, .chap-line, .chap-title span, .chap-chips, .sc-layer, .sc-stack, .sc-fig', { clearProps: 'all' })
+      gsap.set('.chap, .chap-line, .chap-title span, .chap-chips, .sc-layer, .sc-stack, .sc-fig, .dr-ticks, .dr-legend, .dr-inner', { clearProps: 'all' })
       const st = { trigger: root.current!, start: 'top top', end: 'bottom bottom' }
       let lastClick = -1
 
@@ -95,16 +95,31 @@ export default function Scene() {
       // the engraved ring is always there behind every picture. While the watch comes apart its three layers drift apart
       // (outer scale ring grows, legend ring and inner rings turn the other way and shrink / swell); when the watch is whole
       // again they glide back together and settle exactly where they started — no jump, no fade.
-      gsap.set(['.dr-ticks', '.dr-legend', '.dr-inner'], { svgOrigin: '0 0' })
-      tl.fromTo('.dr-ticks', { rotation: 0 }, { rotation: 360, duration: 0.95, ease: 'power1.inOut' }, 0)
-        .fromTo('.dr-legend', { rotation: 0 }, { rotation: -360, duration: 0.95, ease: 'power1.inOut' }, 0)
-        .fromTo('.dr-inner', { rotation: 0 }, { rotation: 180, duration: 0.95, ease: 'power1.inOut' }, 0)
-        .fromTo('.dr-ticks', { scale: 1 }, { scale: 1.09, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
-        .fromTo('.dr-legend', { scale: 1 }, { scale: 0.9, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
-        .fromTo('.dr-inner', { scale: 1 }, { scale: 1.16, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
-        .to('.dr-ticks', { scale: 1, duration: 0.2, ease: 'power2.inOut' }, 0.72)
-        .to('.dr-legend', { scale: 1, duration: 0.2, ease: 'power2.inOut' }, 0.72)
-        .to('.dr-inner', { scale: 1, duration: 0.2, ease: 'power2.inOut' }, 0.72)
+      // The three ring groups turn and scale about the dial centre (0,0 of the SVG). They are driven through plain numbers written
+      // straight into the SVG `transform` attribute: GSAP's svgOrigin on nested groups bakes stale offsets into the matrix when a
+      // rebuild/resize happens mid-scroll, which stranded the legend ring in a corner of the page.
+      const ringEls = { t: root.current!.querySelector('.dr-ticks'), l: root.current!.querySelector('.dr-legend'), i: root.current!.querySelector('.dr-inner') }
+      const ring = { t: { r: 0, s: 1 }, l: { r: 0, s: 1 }, i: { r: 0, s: 1 } }
+      const lastDraw: Record<string, string> = {}
+      const drawRing = () => {
+        ;(['t', 'l', 'i'] as const).forEach((k) => {
+          const v = `rotate(${ring[k].r}) scale(${ring[k].s})`
+          if (lastDraw[k] !== v) { lastDraw[k] = v; ringEls[k]?.setAttribute('transform', v) }
+        })
+      }
+      drawRing()
+      // ScrollTrigger refreshes and resizes re-render the timeline with callbacks suppressed, so onUpdate alone can miss the final
+      // frame; drawing on the shared ticker keeps the DOM equal to the numbers at all times (no-op unless a value changed)
+      gsap.ticker.add(drawRing)
+      tl.fromTo(ring.t, { r: 0 }, { r: 360, duration: 0.95, ease: 'power1.inOut' }, 0)
+        .fromTo(ring.l, { r: 0 }, { r: -360, duration: 0.95, ease: 'power1.inOut' }, 0)
+        .fromTo(ring.i, { r: 0 }, { r: 180, duration: 0.95, ease: 'power1.inOut' }, 0)
+        .fromTo(ring.t, { s: 1 }, { s: 1.09, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
+        .fromTo(ring.l, { s: 1 }, { s: 0.9, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
+        .fromTo(ring.i, { s: 1 }, { s: 1.16, duration: 0.34, ease: 'power2.inOut', immediateRender: false }, 0.1)
+        .fromTo(ring.t, { s: 1.09 }, { s: 1, duration: 0.2, ease: 'power2.inOut', immediateRender: false }, 0.72)
+        .fromTo(ring.l, { s: 0.9 }, { s: 1, duration: 0.2, ease: 'power2.inOut', immediateRender: false }, 0.72)
+        .fromTo(ring.i, { s: 1.16 }, { s: 1, duration: 0.2, ease: 'power2.inOut', immediateRender: false }, 0.72)
 
       // intro copy leaves, hint fades, chapters enter / leave
       tl.fromTo('.intro-wrap', { opacity: 1, y: 0 }, { opacity: 0, y: -50, duration: 0.04, ease: 'power2.in' }, 0.004)
@@ -130,7 +145,7 @@ export default function Scene() {
       const sync = () => { ScrollTrigger.refresh(); const stt = tl.scrollTrigger; if (stt) tl.progress(stt.progress) }
       const raf = requestAnimationFrame(sync)
       const later = setTimeout(sync, 350)
-      return () => { cancelAnimationFrame(raf); clearTimeout(later) }
+      return () => { cancelAnimationFrame(raf); clearTimeout(later); gsap.ticker.remove(drawRing) }
     })
     const t = setTimeout(() => ScrollTrigger.refresh(), 250)
     return () => {

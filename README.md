@@ -147,12 +147,11 @@ Upload `dist/` to Cloudflare Pages / Netlify / Vercel (or push this repo and set
 ## Publish on GitHub
 
 ```bash
-cd aurum-heritage-42
 git init
 git add .
 git commit -m "AURUM — Heritage 42"
 git branch -M main
-git remote add origin https://github.com/<your-user>/aurum-heritage-42.git
+git remote add origin https://github.com/<your-user>/<your-repo>.git
 git push -u origin main
 ```
 

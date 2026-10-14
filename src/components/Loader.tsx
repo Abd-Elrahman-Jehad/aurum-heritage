@@ -98,7 +98,7 @@ export default function Loader() {
         .to('.ld-sec', { rotation: '+=1080', svgOrigin: '100 100', duration: 1.1, ease: 'power3.in' }, '+=0.15')
         .to('.ld-ring', { opacity: 1, strokeWidth: 3, duration: 0.5 }, '<')
         .to('.ld-meta, .ld-brand', { opacity: 0, y: -14, duration: 0.5, ease: 'power2.in' }, '<0.2')
-        .add(() => setEntered(true), '-=0.35')
+        .add(() => { document.body.classList.remove('is-loading'); setEntered(true) }, '-=0.35')
         .to('.ld-dial', { scale: 14, opacity: 0, duration: 1.3, ease: 'expo.in', transformOrigin: '50% 50%' }, '-=0.5')
         .to('.ld-fog', { opacity: 0, duration: 0.9 }, '<')
         .to(root.current, { opacity: 0, duration: 0.9, ease: 'power2.out' }, '-=0.7')
