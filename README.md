@@ -1,5 +1,5 @@
 <div align="center">
-
+ 
 <img src="docs/hero.jpg" alt="AURUM — Heritage 42" width="100%" />
 
 # AURUM — Heritage 42
